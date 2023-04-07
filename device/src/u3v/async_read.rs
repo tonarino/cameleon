@@ -51,6 +51,9 @@ impl<'a> AsyncPool<'a> {
                 AsyncTransfer::new_bulk(self.handle.as_raw(), self.iface_info.bulk_in_ep, buf);
             transfer.submit()?;
             self.pending.push_back(transfer);
+            if self.pending.len() > 200 {
+                dbg!(self.pending.len());
+            }
             Ok(())
         }
     }
