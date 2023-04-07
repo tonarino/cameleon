@@ -62,30 +62,28 @@ camera.load_context().unwrap();
 // Start streaming. Channel capacity is set to 3.
 let payload_rx = camera.start_streaming(3).unwrap();
 
-let mut payload_count = 0;
-while payload_count < 10 {
-    match payload_rx.try_recv() {
-        Ok(payload) => {
-            println!(
-                "payload received! block_id: {:?}, timestamp: {:?}",
-                payload.id(),
-                payload.timestamp()
-            );
-            if let Some(image_info) = payload.image_info() {
-                println!("{:?}\n", image_info);
-                let image = payload.image();
-                // do something with the image.
-                // ...
-            }
-            payload_count += 1;
-
-            // Send back payload to streaming loop to reuse the buffer. This is optional.
-            payload_rx.send_back(payload);
-        }
-        Err(_err) => {
+for _ in 0..10 {
+    let payload = match payload_rx.recv_blocking() {
+        Ok(payload) => payload,
+        Err(e) => {
+            println!("payload receive error: {e}");
             continue;
         }
+    };
+    println!(
+        "payload received! block_id: {:?}, timestamp: {:?}",
+        payload.id(),
+        payload.timestamp()
+    );
+    if let Some(image_info) = payload.image_info() {
+        println!("{:?}\n", image_info);
+        let image = payload.image();
+        // do something with the image.
+        // ...
     }
+
+    // Send back payload to streaming loop to reuse the buffer. This is optional.
+    payload_rx.send_back(payload);
 }
 
 // Closes the camera.
@@ -177,9 +175,6 @@ echo 1000 > /sys/module/usbcore/parameters/usbfs_memory_mb
 
 ### [v0.4.0](https://github.com/cameleon-rs/cameleon/milestone/4)
 * Add support for `UVC` cameras
-
-## Release cycle
-We continuously update the minor version every four weeks, until the version reaches `1.0.0`.
 
 ## Contributing
 Thank you for your interest in contributing to `Cameleon`! We are so happy to have you join the development.  
