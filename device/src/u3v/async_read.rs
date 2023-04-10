@@ -116,7 +116,7 @@ impl AsyncTransfer {
     ) -> Self {
         // non-isochronous endpoints (e.g. control, bulk, interrupt) specify a value of 0
         // This is step 1 of async API
-        let ptr = dbg!(libusb1_sys::libusb_alloc_transfer(0));
+        let ptr = libusb1_sys::libusb_alloc_transfer(0);
         let ptr = NonNull::new(ptr).expect("Could not allocate transfer!");
 
         let user_data = Box::into_raw(Box::new(AtomicBool::new(false))).cast::<libc::c_void>();
@@ -203,11 +203,17 @@ impl AsyncTransfer {
 /// Invariant: transfer must not be pending.
 impl Drop for AsyncTransfer {
     fn drop(&mut self) {
+        dbg!(
+            "Dropping a transfer with flag {} and status {}",
+            self.completed_flag()
+                .load(std::sync::atomic::Ordering::Relaxed),
+            self.transfer().status
+        );
         unsafe {
             drop(Box::from_raw(
                 self.transfer().user_data.cast::<AtomicBool>(),
             ));
-            libusb1_sys::libusb_free_transfer(dbg!(self.ptr.as_ptr()));
+            libusb1_sys::libusb_free_transfer(self.ptr.as_ptr());
         }
     }
 }
