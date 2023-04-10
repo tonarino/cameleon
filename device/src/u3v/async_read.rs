@@ -67,7 +67,7 @@ impl<'a> AsyncPool<'a> {
             let mut transfer = self.pending.pop_front().unwrap();
             Ok(transfer.handle_completed()?)
         } else {
-            Err(dbg!(LibUsbError::Timeout.into()))
+            Err(LibUsbError::Timeout.into())
         }
     }
 
@@ -116,7 +116,7 @@ impl AsyncTransfer {
     ) -> Self {
         // non-isochronous endpoints (e.g. control, bulk, interrupt) specify a value of 0
         // This is step 1 of async API
-        let ptr = libusb1_sys::libusb_alloc_transfer(0);
+        let ptr = dbg!(libusb1_sys::libusb_alloc_transfer(0));
         let ptr = NonNull::new(ptr).expect("Could not allocate transfer!");
 
         let user_data = Box::into_raw(Box::new(AtomicBool::new(false))).cast::<libc::c_void>();
@@ -207,7 +207,7 @@ impl Drop for AsyncTransfer {
             drop(Box::from_raw(
                 self.transfer().user_data.cast::<AtomicBool>(),
             ));
-            libusb1_sys::libusb_free_transfer(self.ptr.as_ptr());
+            libusb1_sys::libusb_free_transfer(dbg!(self.ptr.as_ptr()));
         }
     }
 }
