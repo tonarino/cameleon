@@ -49,7 +49,14 @@ impl<'a> AsyncPool<'a> {
         unsafe {
             let mut transfer =
                 AsyncTransfer::new_bulk(self.handle.as_raw(), self.iface_info.bulk_in_ep, buf);
-            transfer.submit()?;
+
+            match transfer.submit() {
+                Ok(_) => (),
+                Err(e) => {
+                    dbg!(&e);
+                    return Err(e);
+                }
+            }
             self.pending.push_back(transfer);
             self.pending.len();
             Ok(())
@@ -203,12 +210,6 @@ impl AsyncTransfer {
 /// Invariant: transfer must not be pending.
 impl Drop for AsyncTransfer {
     fn drop(&mut self) {
-        dbg!(
-            "Dropping a transfer with flag {} and status {}",
-            self.completed_flag()
-                .load(std::sync::atomic::Ordering::Relaxed),
-            self.transfer().status
-        );
         unsafe {
             drop(Box::from_raw(
                 self.transfer().user_data.cast::<AtomicBool>(),
