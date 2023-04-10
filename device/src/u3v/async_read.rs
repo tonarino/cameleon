@@ -67,7 +67,7 @@ impl<'a> AsyncPool<'a> {
             let mut transfer = self.pending.pop_front().unwrap();
             Ok(transfer.handle_completed()?)
         } else {
-            Err(LibUsbError::Timeout.into())
+            Err(dbg!(LibUsbError::Timeout.into()))
         }
     }
 
