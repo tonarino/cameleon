@@ -51,7 +51,7 @@ impl<'a> AsyncPool<'a> {
                 AsyncTransfer::new_bulk(self.handle.as_raw(), self.iface_info.bulk_in_ep, buf);
             transfer.submit()?;
             self.pending.push_back(transfer);
-            dbg!(self.pending.len());
+            self.pending.len();
             Ok(())
         }
     }
@@ -204,6 +204,9 @@ impl AsyncTransfer {
 impl Drop for AsyncTransfer {
     fn drop(&mut self) {
         unsafe {
+            drop(Box::from_raw(
+                self.transfer().user_data.cast::<AtomicBool>(),
+            ));
             libusb1_sys::libusb_free_transfer(self.ptr.as_ptr());
         }
     }
